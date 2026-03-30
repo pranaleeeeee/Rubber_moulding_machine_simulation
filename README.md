@@ -9,7 +9,3 @@ How to run:
    mvn spring-boot:run
 3. Open: http://localhost:8080
 
-Notes:
-- Baseline history (50 cycles) is generated at startup.
-- History and alerts are kept in memory (app restarts clear them). Add persistence if required.
-- The UI uses Thymeleaf + Bootstrap.
