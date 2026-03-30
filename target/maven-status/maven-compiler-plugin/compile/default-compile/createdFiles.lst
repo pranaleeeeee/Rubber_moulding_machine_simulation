@@ -1,0 +1,6 @@
+com\example\molding\model\CycleData.class
+com\example\molding\model\Alert.class
+com\example\molding\model\Sensor.class
+com\example\molding\controller\WebController.class
+com\example\molding\model\RubberMoldingMachine.class
+com\example\molding\MoldingApplication.class

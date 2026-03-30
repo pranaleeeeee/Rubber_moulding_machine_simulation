@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8">
+    <title>Hydraulic Rubber Molding - Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap CDN for quick styling -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+      body { padding-top: 1.5rem; }
+      .alert-box { max-height: 200px; overflow:auto; }
+      .history-table { font-size: 0.9rem; }
+    </style>
+  </head>
+  <body class="container">
+    <h1 class="mb-3">Hydraulic Rubber Molding — Monitoring Demo</h1>
+    <p class="text-muted">Machine ID: <span th:text="${machineId}"></span></p>
+
+    <div class="row">
+      <div class="col-md-5">
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5 class="card-title">Run Live Cycle</h5>
+            <form method="post" action="/" th:action="@{/}">
+              <div class="mb-2">
+                <label class="form-label">MOLD_TEMPERATURE (°C)</label>
+                <input name="MOLD_TEMPERATURE" class="form-control" th:value="${defaults.MOLD_TEMPERATURE}">
+              </div>
+              <div class="mb-2">
+                <label class="form-label">MOLDING_PRESSURE (bar)</label>
+                <input name="MOLDING_PRESSURE" class="form-control" th:value="${defaults.MOLDING_PRESSURE}">
+              </div>
+              <div class="mb-2">
+                <label class="form-label">HYDRAULIC_FORCE (kN)</label>
+                <input name="HYDRAULIC_FORCE" class="form-control" th:value="${defaults.HYDRAULIC_FORCE}">
+              </div>
+              <div class="mb-2">
+                <label class="form-label">VIBRATION_LEVEL (mm/s)</label>
+                <input name="VIBRATION_LEVEL" class="form-control" th:value="${defaults.VIBRATION_LEVEL}">
+              </div>
+              <div class="mb-2">
+                <label class="form-label">PRESSING_TIME (sec)</label>
+                <input name="PRESSING_TIME" class="form-control" th:value="${defaults.PRESSING_TIME}">
+              </div>
+              <div class="mb-2">
+                <label class="form-label">PUMP_MOTOR_RPM (rpm)</label>
+                <input name="PUMP_MOTOR_RPM" class="form-control" th:value="${defaults.PUMP_MOTOR_RPM}">
+              </div>
+              <button class="btn btn-primary mt-2">Simulate Cycle</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5 class="card-title">Machine Health Probability</h5>
+            <p>Working: <strong th:text="${probWorking}">0.0</strong>%</p>
+            <p>Faulty: <strong th:text="${probFaulty}">0.0</strong>%</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-7">
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5 class="card-title">Latest Cycle</h5>
+            <div th:if="${latest != null}">
+              <p><strong>Cycle ID:</strong> <span th:text="${latest.Cycle}"></span>
+                 &nbsp; <strong>Timestamp:</strong> <span th:text="${latest.tstr}"></span></p>
+
+              <div class="row">
+                <div class="col-6">
+                  <h6>Parameters</h6>
+                  <ul>
+                    <li th:each="entry : ${latest.entrySet()}"
+                        th:if="${entry.key != 'Cycle' and entry.key != 'tstr' and !entry.key.startsWith('Pressing_Time') and entry.key != 'Energy_Index'}"
+                        th:text="${entry.key + ': ' + entry.value}"></li>
+                  </ul>
+                </div>
+                <div class="col-6">
+                  <h6>KPIs</h6>
+                  <ul>
+                    <li th:if="${latest.Pressing_Time_Deviation_pct != null}" th:text="'Pressing_Time_Deviation_pct: ' + ${latest.Pressing_Time_Deviation_pct} + '%'"></li>
+                    <li th:if="${latest.Energy_Index != null}" th:text="'Energy_Index: ' + ${latest.Energy_Index}"></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div th:if="${latest == null}">
+              <p>No cycles yet.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5 class="card-title">Alerts</h5>
+            <div class="alert-box">
+              <div th:if="${#lists.isEmpty(alerts)}">
+                <p>No alerts generated. All parameters within expected ranges.</p>
+              </div>
+              <div th:each="a : ${alerts}">
+                <div th:classappend="${a.severity == 'CRITICAL'} ? 'alert-danger' : 'alert-warning'"
+                     class="alert">
+                  <strong th:text="${a.severity}"></strong>
+                  (<span th:text="${a.tstr}"></span>)
+                  — <span th:text="${a.message}"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">History (most recent first)</h5>
+            <div class="table-responsive">
+              <table class="table table-bordered history-table">
+                <thead class="table-light">
+                  <tr>
+                    <th>Cycle</th><th>Time</th><th>Mold Temp</th><th>Pressure</th><th>Force</th><th>Vib</th><th>Press Time</th><th>RPM</th><th>Press Dev %</th><th>Energy</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr th:each="row : ${history}">
+                    <td th:text="${row.Cycle}"></td>
+                    <td th:text="${row.tstr}"></td>
+                    <td th:text="${row.MOLD_TEMPERATURE}"></td>
+                    <td th:text="${row.MOLDING_PRESSURE}"></td>
+                    <td th:text="${row.HYDRAULIC_FORCE}"></td>
+                    <td th:text="${row.VIBRATION_LEVEL}"></td>
+                    <td th:text="${row.PRESSING_TIME}"></td>
+                    <td th:text="${row.PUMP_MOTOR_RPM}"></td>
+                    <td th:text="${row.Pressing_Time_Deviation_pct}"></td>
+                    <td th:text="${row.Energy_Index}"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </body>
+</html>
